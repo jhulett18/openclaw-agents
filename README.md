@@ -1,326 +1,300 @@
-# OpenClaw Agents Collection
+# OpenClaw Agents - Instance Setup Documentation
 
-A comprehensive collection of OpenClaw agents for social media automation, monitoring, and management. This repository includes the SMMA (Social Media Marketing Agency) bot with full management and monitoring capabilities.
+**This repository contains documentation and setup instructions only. No executable code is included.**
 
-## Features
+## Purpose
 
-### SMMA Bot
-- **Multi-platform posting** - Support for 13+ social media platforms
-- **Media management** - Upload and manage images/videos
-- **Content scheduling** - Schedule posts for optimal engagement
-- **Batch processing** - Import content calendars via CSV
-- **Analytics tracking** - Monitor post performance
-- **Profile management** - Handle multiple brand profiles
+This repository serves as a knowledge base for setting up ClawdBot agents on a new server instance, with a focus on Telegram bot configuration and system monitoring tools. It documents how to replicate the current working setup without relying on third-party services.
 
-### Supported Platforms
-- Twitter/X
-- Instagram
-- Facebook
-- LinkedIn
-- TikTok
-- YouTube
-- Pinterest
-- Reddit
-- Bluesky
-- Threads
-- Google Business
-- Telegram
-- Snapchat
+## What This Repository Contains
 
-### Management Tools
-- **Health monitoring** - Automated health checks every 2 hours
-- **Auto-recovery** - Self-healing from common failures
-- **Monitoring dashboard** - Real-time status monitoring
-- **Docker sandboxing** - Secure execution environment
+- 📚 **Documentation**: Step-by-step guides for bot setup
+- 🤖 **Bot Configuration**: Instructions for Telegram bot creation and connection
+- 🛠️ **Management Scripts**: Monitoring and recovery tools
+- 📋 **Best Practices**: Security, backup, and maintenance procedures
 
-## Quick Start
+## What This Repository Does NOT Contain
+
+- ❌ No API keys or tokens
+- ❌ No executable bot code
+- ❌ No third-party service dependencies
+- ❌ No GetLate or other proxy services
+
+## System Architecture
+
+```
+Your Server
+    ↓
+ClawdBot Gateway (Port 18789)
+    ↓
+Direct Connection to Telegram Bot API
+    ↓
+Telegram Users/Channels/Groups
+```
+
+## Quick Start Guide
+
+### 1. Install ClawdBot
+
+```bash
+# Install globally via npm
+npm install -g clawdbot
+
+# Initialize ClawdBot
+clawdbot setup
+
+# Start the gateway
+clawdbot gateway
+
+# Or run as daemon (recommended)
+clawdbot daemon enable
+clawdbot daemon start
+```
+
+### 2. Create Telegram Bot
+
+1. Open Telegram and message **@BotFather**
+2. Send `/newbot` and follow prompts
+3. Save the bot token provided
+
+### 3. Connect Bot to ClawdBot
+
+```bash
+# Add bot to ClawdBot
+clawdbot providers add \
+  --provider telegram \
+  --account mybotname \
+  --name "My Bot Name" \
+  --token "BOT_TOKEN_FROM_BOTFATHER"
+
+# Verify connection
+clawdbot providers list | grep telegram
+
+# Send test message
+clawdbot message send \
+  --provider telegram \
+  --account mybotname \
+  --to @channel_name \
+  --message "Hello World!"
+```
+
+## Current Bot Fleet
+
+This instance runs 5 specialized Telegram bots:
+
+| Bot Name | Account ID | Purpose |
+|----------|------------|---------|
+| **Apartment Bot** | `apartment` | Property management and tenant communications |
+| **ClawdOps System Bot** | `default` | System monitoring, alerts, and admin tasks |
+| **Nightlife Guide Bot** | `events` | Event management and announcements |
+| **Resume Bot** | `resumebot` | Resume generation and career services |
+| **SMMA Bot** | `smma` | Social media marketing automation |
+
+## Documentation Structure
+
+```
+openclaw-agents/
+├── README.md                           # This file
+├── telegram-setup/                     # Telegram bot documentation
+│   ├── TELEGRAM_BOT_SETUP.md         # Complete setup guide
+│   ├── BOT_CREATION.md               # BotFather tutorial
+│   ├── CLAWDBOT_CONNECTION.md        # Provider configuration details
+│   └── EXISTING_BOTS.md              # Current bot configurations
+├── skills/
+│   └── smma/                          # SMMA bot documentation
+│       ├── SKILL.md                  # Skill description
+│       └── README.md                  # Setup instructions
+└── management/                         # System management scripts
+    ├── auto-recovery.sh               # Automated recovery script
+    ├── health-monitor.sh              # Health monitoring
+    ├── monitoring-dashboard.sh        # Dashboard script
+    └── sandbox-setup.sh               # Docker sandbox setup
+```
+
+## Key Features
+
+### Direct Telegram Connection
+- **No middleman services** - Direct Bot API connection
+- **Lower latency** - No proxy overhead
+- **Full control** - All bot features available
+- **Better security** - Tokens stay on your server
+
+### Multi-Bot Support
+- Run unlimited bots from one instance
+- Each bot has unique account ID
+- Individual bot monitoring and control
+- Separate configurations per bot
+
+### Integrated Monitoring
+- Health checks every 2 hours
+- Auto-recovery from failures
+- Real-time status dashboard
+- Comprehensive logging
+
+## Setup New Instance
 
 ### Prerequisites
-- Python 3.8+
-- pip
-- ClawdBot CLI installed
-- GetLate API key (get from [getlate.dev](https://getlate.dev))
+- Linux/macOS/Windows with WSL
+- Node.js 18+ and npm
+- Python 3.8+ (for some skills)
+- Internet connection
+- Telegram account
 
-### Installation
+### Installation Steps
 
-#### Method 1: Automated Install
+1. **Clone this repository**
+   ```bash
+   git clone https://github.com/yourusername/openclaw-agents.git
+   cd openclaw-agents
+   ```
+
+2. **Install ClawdBot**
+   ```bash
+   npm install -g clawdbot
+   clawdbot setup
+   ```
+
+3. **Follow the guides**
+   - Start with `telegram-setup/TELEGRAM_BOT_SETUP.md`
+   - Create bots using `telegram-setup/BOT_CREATION.md`
+   - Configure providers via `telegram-setup/CLAWDBOT_CONNECTION.md`
+
+4. **Set up monitoring** (optional)
+   ```bash
+   chmod +x management/*.sh
+   crontab -e
+   # Add: */120 * * * * /path/to/management/health-monitor.sh
+   ```
+
+## Security Best Practices
+
+### Token Management
+- **Never commit tokens to Git**
+- **Use token files** with restrictive permissions (600)
+- **Rotate tokens** quarterly or if compromised
+- **Store securely** in password managers
+
+### Access Control
+- Each bot should have minimal required permissions
+- Use different bots for different security levels
+- Regularly audit bot access to channels/groups
+- Monitor logs for unauthorized usage
+
+### Backup Strategy
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/openclaw-agents.git
-cd openclaw-agents
+# Backup configuration
+cp -r ~/.clawdbot ~/.clawdbot_backup_$(date +%Y%m%d)
 
-# Run the installer
-chmod +x install.sh
-./install.sh
+# Export providers
+clawdbot providers list --json > providers_backup.json
+
+# Create encrypted archive
+tar -czf clawdbot_backup_$(date +%Y%m%d).tar.gz ~/.clawdbot_backup_*
 ```
 
-#### Method 2: Manual Install
+## Common Commands
+
+### Bot Management
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/openclaw-agents.git
-cd openclaw-agents
+# List all bots
+clawdbot providers list
 
-# Install SMMA skill
-clawdbot mcp add smma ./skills/smma
+# Add new bot
+clawdbot providers add --provider telegram --account newbot --token "TOKEN"
 
-# Install Python dependencies
-pip install -r skills/smma/requirements.txt
+# Remove bot
+clawdbot providers remove --provider telegram --account oldbot
 
-# Set up environment variable
-export GETLATE_API_KEY="your_api_key_here"
-echo 'export GETLATE_API_KEY="your_api_key_here"' >> ~/.bashrc
-
-# Set up monitoring (optional)
-chmod +x management/*.sh
-crontab -e
-# Add: */120 * * * * /path/to/openclaw-agents/management/health-monitor.sh
+# Check status
+clawdbot status
 ```
 
-## Configuration
-
-### Environment Variables
-Create a `.env` file in your home directory:
+### Message Operations
 ```bash
-GETLATE_API_KEY=your_api_key_here
+# Send to channel
+clawdbot message send --provider telegram --account smma --to @channel --message "text"
+
+# Send to user (by ID)
+clawdbot message send --provider telegram --account support --to 123456789 --message "text"
+
+# Send to group
+clawdbot message send --provider telegram --account events --to -1001234567890 --message "text"
 ```
 
-### GetLate Setup
-1. Sign up at [getlate.dev](https://getlate.dev)
-2. Get your API key from the dashboard
-3. Set the environment variable as shown above
-
-### Connect Social Media Accounts
+### System Control
 ```bash
-# List available profiles
-clawdbot smma profiles list
+# Gateway management
+clawdbot gateway                    # Start manually
+clawdbot daemon start               # Start as service
+clawdbot daemon stop                # Stop service
+clawdbot daemon restart             # Restart service
 
-# Create a new profile
-clawdbot smma profiles create "My Brand"
+# Health checks
+clawdbot doctor                     # Full system check
+clawdbot providers status --deep    # Detailed provider status
 
-# Connect social media accounts
-clawdbot smma accounts connect twitter
-clawdbot smma accounts connect instagram
-clawdbot smma accounts connect linkedin
-# ... etc
+# Logs
+clawdbot logs --tail 100           # View recent logs
+clawdbot logs --tail 50 | grep telegram  # Filter for Telegram
 ```
-
-## Usage
-
-### Interactive Posting
-```bash
-# Create a post interactively
-clawdbot smma post
-```
-
-### Quick Post to All Platforms
-```bash
-clawdbot smma post --content "Exciting news!" --media photo.jpg --platforms all
-```
-
-### Schedule a Post
-```bash
-clawdbot smma post schedule \
-  --content "Check out our latest product!" \
-  --media product.jpg \
-  --platforms twitter,instagram,linkedin \
-  --date "2024-02-20" \
-  --time "14:00"
-```
-
-### Batch Posting from CSV
-Create a CSV file with your content calendar:
-```csv
-date,time,content,media,platforms
-2024-02-20,10:00,"Morning motivation!",quote.jpg,"twitter,instagram"
-2024-02-20,14:00,"New blog post",blog_header.png,"linkedin,facebook"
-```
-
-Then run:
-```bash
-clawdbot smma post batch content_calendar.csv
-```
-
-### Analytics
-```bash
-# View post analytics
-clawdbot smma analytics summary
-
-# Get specific post metrics
-clawdbot smma analytics post <post_id>
-```
-
-### Profile Management
-```bash
-# List profiles
-clawdbot smma profiles list
-
-# Create profile
-clawdbot smma profiles create "Brand Name"
-
-# Delete profile
-clawdbot smma profiles delete <profile_id>
-```
-
-### Account Management
-```bash
-# List connected accounts
-clawdbot smma accounts list
-
-# Connect account
-clawdbot smma accounts connect <platform>
-
-# Disconnect account
-clawdbot smma accounts disconnect <account_id>
-```
-
-## Monitoring & Management
-
-### Health Monitoring
-The health monitor runs automated checks and recovery:
-```bash
-# Manual health check
-./management/health-monitor.sh
-
-# Set up automated monitoring (runs every 2 hours)
-crontab -e
-# Add: 0 */2 * * * /path/to/management/health-monitor.sh
-```
-
-### Auto-Recovery
-Automatically recovers from common failures:
-```bash
-# Run auto-recovery
-./management/auto-recovery.sh
-
-# Features:
-# - Daemon restart on failure
-# - Provider reconnection
-# - API limit management
-# - Failed cron job recovery
-# - Docker sandbox cleanup
-```
-
-### Monitoring Dashboard
-Interactive real-time monitoring:
-```bash
-./management/monitoring-dashboard.sh
-```
-
-### Docker Sandbox (Optional)
-Set up isolated execution environment:
-```bash
-./management/sandbox-setup.sh
-```
-
-## API Rate Limits
-
-GetLate API rate limits by plan:
-- **Free tier**: 60 requests/minute
-- **Build plan**: 120 requests/minute  
-- **Accelerate plan**: 600 requests/minute
-- **Unlimited plan**: 1,200 requests/minute
 
 ## Troubleshooting
 
-### Common Issues
+### Bot Not Responding
+1. Check gateway status: `clawdbot daemon status`
+2. Verify bot token: `clawdbot providers list`
+3. Test connection: `clawdbot doctor`
+4. Restart if needed: `clawdbot daemon restart`
 
-#### API Key Not Found
-```bash
-# Verify environment variable is set
-echo $GETLATE_API_KEY
+### Invalid Token
+1. Verify with @BotFather
+2. Regenerate if needed
+3. Update in ClawdBot
+4. Test connection
 
-# Set it if missing
-export GETLATE_API_KEY="your_api_key_here"
-```
+### Connection Issues
+1. Check network: `ping api.telegram.org`
+2. Verify firewall (port 443 required)
+3. Check logs: `clawdbot logs --tail 100`
+4. Restart gateway
 
-#### Connection Errors
-```bash
-# Check ClawdBot daemon status
-clawdbot health
+## Migration Checklist
 
-# Restart if needed
-clawdbot daemon restart
-```
+When setting up a new instance:
 
-#### Failed Posts
-```bash
-# Check cron job status
-clawdbot cron list
+- [ ] Install ClawdBot
+- [ ] Initialize configuration
+- [ ] Create/import bot tokens
+- [ ] Add each bot to ClawdBot
+- [ ] Test each bot connection
+- [ ] Verify channel/group access
+- [ ] Set up monitoring scripts
+- [ ] Configure auto-start daemon
+- [ ] Test message sending
+- [ ] Document custom configurations
 
-# Retry failed jobs
-clawdbot cron run <job_id>
-```
+## Important Notes
 
-### Logs
-- Health monitor logs: `/tmp/clawdbot-health-*.log`
-- Recovery logs: `/tmp/clawdbot-recovery-*.log`
-- Main ClawdBot logs: Check `clawdbot logs`
+1. **This is documentation only** - No running code included
+2. **Direct connections only** - No third-party APIs
+3. **Security first** - Never expose tokens
+4. **Test everything** - Verify each step works
 
-## Development
+## Support Resources
 
-### Project Structure
-```
-openclaw-agents/
-├── skills/               # OpenClaw skill modules
-│   └── smma/            # SMMA bot skill
-├── management/          # Management scripts
-├── install.sh           # Installation script
-└── README.md           # This file
-```
-
-### Adding New Skills
-1. Create a new directory under `skills/`
-2. Include required files:
-   - `SKILL.md` - Skill metadata
-   - Python/bash implementation
-   - `requirements.txt` - Dependencies
-   - `setup.sh` - Setup script
-3. Register with ClawdBot: `clawdbot mcp add <skill_name> ./skills/<skill_name>`
-
-## Security
-
-### Best Practices
-- Never commit API keys to the repository
-- Use environment variables for sensitive data
-- Regularly rotate API keys
-- Monitor usage and set up alerts
-- Use Docker sandboxing for untrusted operations
-
-### Permissions
-The SMMA bot requires:
-- Network access for API calls
-- File system access for media uploads
-- Environment variable access for API keys
-
-## Support
-
-### Resources
-- GetLate Documentation: [docs.getlate.dev](https://docs.getlate.dev)
-- OpenClaw Documentation: [docs.openclaw.ai](https://docs.openclaw.ai)
-- ClawdBot Documentation: [docs.clawd.bot](https://docs.clawd.bot)
-
-### Issues
-For issues or questions:
-1. Check the troubleshooting section
-2. Review logs for error details
-3. Open an issue on GitHub
-4. Contact GetLate support for API issues
-
-## License
-
-MIT License - See LICENSE file for details
+- **ClawdBot Docs**: https://docs.openclaw.ai/
+- **Telegram Bot API**: https://core.telegram.org/bots
+- **BotFather**: https://t.me/botfather
+- **This Repository**: Documentation and guides
 
 ## Contributing
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+This repository is meant for documentation and knowledge transfer. When updating:
+1. Keep documentation clear and concise
+2. Update based on actual working configurations
+3. Never include real tokens or sensitive data
+4. Test all instructions on a fresh system
 
-## Acknowledgments
+## License
 
-- GetLate API for social media platform integration
-- OpenClaw framework for agent architecture
-- ClawdBot for execution environment
+Documentation and scripts provided as-is for setting up ClawdBot instances.

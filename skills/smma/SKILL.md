@@ -1,112 +1,189 @@
 ---
-name: smma
-description: Social Media Marketing Agency automation with GetLate API for multi-platform posting
+name: telegram-bots
+description: Documentation for setting up Telegram bots with ClawdBot for social media automation
 metadata: {
   "openclaw": {
-    "emoji": "📱",
+    "emoji": "🤖",
     "requires": {
-      "bins": ["python3"],
-      "env": ["GETLATE_API_KEY"]
+      "bins": ["node", "npm"],
+      "packages": ["clawdbot"]
     },
     "install": [
       {
         "kind": "message",
-        "text": "First, get your GetLate API key from https://getlate.dev"
+        "text": "This is documentation only. See telegram-setup/ directory for bot configuration guides."
       },
       {
-        "kind": "bash",
-        "script": "pip install requests python-dotenv click rich tabulate"
+        "kind": "message", 
+        "text": "To set up Telegram bots, you need: 1) Bot tokens from @BotFather, 2) ClawdBot installed"
       }
     ]
   }
 }
 ---
 
-# SMMA - Social Media Marketing Agency Automation
+# Telegram Bots via ClawdBot
 
-Automate your social media marketing across 13+ platforms using GetLate API.
+This skill provides documentation for setting up and managing Telegram bots directly through ClawdBot, without any third-party services.
+
+## Overview
+
+ClawdBot connects directly to Telegram's Bot API, providing:
+- Direct bot management without middleman services
+- Multi-bot support (run multiple bots from one instance)
+- Native integration with ClawdBot's agent system
+- Secure token management
+- Built-in rate limiting and error handling
+
+## Quick Setup
+
+1. **Create Bot with @BotFather**
+   ```
+   /newbot
+   Choose name: SMMA Marketing Bot
+   Choose username: smma_marketing_bot
+   Save token: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+   ```
+
+2. **Add to ClawdBot**
+   ```bash
+   clawdbot providers add \
+     --provider telegram \
+     --account smma \
+     --name "SMMA Bot" \
+     --token "YOUR_BOT_TOKEN"
+   ```
+
+3. **Verify Connection**
+   ```bash
+   clawdbot providers list | grep telegram
+   clawdbot message send --provider telegram --account smma --to @channel --message "Hello!"
+   ```
+
+## Current Bot Configuration
+
+This instance runs 5 specialized Telegram bots:
+
+| Bot | Purpose | Account ID |
+|-----|---------|------------|
+| Apartment Bot | Property management | `apartment` |
+| System Bot | Monitoring & alerts | `default` |
+| Events Bot | Event management | `events` |
+| Resume Bot | Career services | `resumebot` |
+| SMMA Bot | Marketing automation | `smma` |
 
 ## Features
-- 📊 Multi-platform posting (Twitter/X, Instagram, Facebook, LinkedIn, TikTok, YouTube, Pinterest, Reddit, Bluesky, Threads, Telegram, Snapchat, Google Business)
-- 🖼️ Media upload and management
-- 📅 Content scheduling and queues
-- 📈 Analytics and performance tracking
-- 🔄 Batch posting from CSV
-- 👥 Profile and account management
+
+### Multi-Bot Management
+- Run unlimited bots from single ClawdBot instance
+- Each bot has unique account ID for routing
+- Separate token and configuration per bot
+- Individual bot monitoring and control
+
+### Direct API Connection
+- No proxy services or third-party APIs
+- Direct connection: ClawdBot ↔ Telegram API
+- Lower latency, higher reliability
+- Full control over bot features
+
+### Security
+- Tokens stored securely in ClawdBot config
+- Support for token files and environment variables
+- Encrypted configuration backups
+- Token rotation capabilities
+
+### Integration
+- Works with ClawdBot's agent system
+- Supports cron jobs and automation
+- WebSocket gateway for real-time processing
+- Compatible with all ClawdBot skills
+
+## Use Cases
+
+### Social Media Marketing (SMMA)
+- Schedule posts across platforms
+- Automated content distribution
+- Engagement tracking
+- Campaign management
+- Analytics reporting
+
+### System Monitoring
+- Server health alerts
+- Error notifications
+- Backup status reports
+- Performance metrics
+- Automated diagnostics
+
+### Customer Support
+- Ticket management
+- FAQ responses
+- Escalation routing
+- Response automation
+- Satisfaction tracking
+
+### Event Management
+- Event announcements
+- RSVP collection
+- Reminder notifications
+- Venue updates
+- Schedule changes
 
 ## Commands
 
-### Profile Management
-- `smma profiles list` - List all GetLate profiles
-- `smma profiles create <name>` - Create new profile
-- `smma profiles delete <id>` - Delete a profile
-
-### Account Connection
-- `smma accounts connect <platform>` - Connect social media account
-- `smma accounts list` - List connected accounts
-- `smma accounts disconnect <id>` - Disconnect an account
-
-### Content Posting
-- `smma post` - Interactive post creation
-- `smma post schedule` - Schedule a post with options
-- `smma post batch <csv_file>` - Batch schedule from CSV
-
-### Media Management
-- `smma media upload <file>` - Upload media file
-- `smma media list` - List uploaded media
-
-### Analytics
-- `smma analytics post <id>` - Get post performance
-- `smma analytics summary` - Get overall analytics
-
-## Setup
-
-1. Get your API key from [GetLate](https://getlate.dev)
-2. Set environment variable:
-   ```bash
-   export GETLATE_API_KEY="your_api_key_here"
-   ```
-3. Connect your social media accounts:
-   ```bash
-   clawdbot smma accounts connect twitter
-   clawdbot smma accounts connect instagram
-   # etc...
-   ```
-
-## Examples
-
-### Quick Post to All Platforms
+### Provider Management
 ```bash
-clawdbot smma post --content "Exciting news!" --media photo.jpg --platforms all
+# Add bot
+clawdbot providers add --provider telegram --account <id> --token <token>
+
+# List all bots
+clawdbot providers list
+
+# Remove bot
+clawdbot providers remove --provider telegram --account <id>
+
+# Check status
+clawdbot providers status
 ```
 
-### Schedule a Post
+### Message Operations
 ```bash
-clawdbot smma post schedule \
-  --content "Check out our latest product!" \
-  --media product.jpg \
-  --platforms twitter,instagram,linkedin \
-  --date "2024-02-20" \
-  --time "14:00"
+# Send message
+clawdbot message send --provider telegram --account <id> --to <recipient> --message "text"
+
+# Send to channel
+clawdbot message send --provider telegram --account smma --to @channel_name --message "text"
+
+# Send to user
+clawdbot message send --provider telegram --account support --to 123456789 --message "text"
 ```
 
-### Batch Posting from CSV
+### Gateway Control
 ```bash
-clawdbot smma post batch content_calendar.csv
+# Start gateway
+clawdbot gateway
+
+# Enable daemon
+clawdbot daemon enable
+clawdbot daemon start
+
+# Check health
+clawdbot doctor
 ```
 
-CSV format:
-```csv
-date,time,content,media,platforms
-2024-02-20,10:00,"Morning motivation!",quote.jpg,"twitter,instagram"
-2024-02-20,14:00,"New blog post",blog_header.png,"linkedin,facebook"
-```
+## Documentation
 
-## Rate Limits
-- Free tier: 60 requests/minute
-- Build plan: 120 requests/minute  
-- Accelerate plan: 600 requests/minute
-- Unlimited plan: 1,200 requests/minute
+For complete setup instructions, see:
+- `/telegram-setup/TELEGRAM_BOT_SETUP.md` - Complete setup guide
+- `/telegram-setup/BOT_CREATION.md` - BotFather tutorial
+- `/telegram-setup/CLAWDBOT_CONNECTION.md` - Provider configuration
+- `/telegram-setup/EXISTING_BOTS.md` - Current bot details
 
 ## Support
-For issues or questions about GetLate API, visit [docs.getlate.dev](https://docs.getlate.dev)
+
+- ClawdBot Documentation: https://docs.openclaw.ai/
+- Telegram Bot API: https://core.telegram.org/bots/api
+- BotFather: https://t.me/botfather
+
+## Important Notes
+
+This is a **documentation-only** skill. It provides instructions for setting up Telegram bots but contains no executable code. The actual bot functionality is handled entirely by ClawdBot's native Telegram provider system.
