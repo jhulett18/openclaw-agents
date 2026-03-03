@@ -1,127 +1,152 @@
-# OpenClaw Agents
+# OpenClaw Agents — ClawdBot Infrastructure
 
-Self-hosted Telegram bot fleet powered by [ClawdBot](https://github.com/clawdbot/clawdbot) — a Node.js gateway that multiplexes multiple Telegram bots through a single process, each backed by its own Claude agent.
+Documentation and configuration templates for the ClawdBot multi-agent system running 5 specialized Telegram bots.
 
 ## Architecture
 
 ```
-Telegram Cloud
-     │
-     │  (Bot API polling)
-     ▼
-┌─────────────────────────────────────────────────┐
-│  ClawdBot Gateway  (Node.js, port 18789)        │
-│                                                 │
-│  ┌───────────┐ ┌───────────┐ ┌───────────────┐ │
-│  │ Account:  │ │ Account:  │ │ Account:      │ │
-│  │ prod-smma │ │ prod-cici │ │ reddit-scanner│ │     ┌──────────────┐
-│  └─────┬─────┘ └─────┬─────┘ └──────┬────────┘ │     │  claude-mem  │
-│        │              │              │          │────▶│  (port 37777)│
-│  ┌─────┴─────┐ ┌─────┴─────┐ ┌──────┴────────┐ │     │  Per-agent   │
-│  │ Agent:    │ │ Agent:    │ │ Agent:        │ │     │  memory      │
-│  │ main     │ │ cici      │ │ reddit-scanner│ │     └──────────────┘
-│  └───────────┘ └───────────┘ └───────────────┘ │
-│                                                 │
-│  ┌──────────────────┐                           │
-│  │ Account:         │                           │
-│  │ prod-openclaw    │                           │
-│  └────────┬─────────┘                           │
-│  ┌────────┴─────────┐                           │
-│  │ Agent:           │                           │
-│  │ openclaw-monitor │                           │
-│  └──────────────────┘                           │
-└─────────────────────────────────────────────────┘
-     │                              │
-     │ systemd                      │ systemd
-     ▼                              ▼
-┌──────────────┐            ┌───────────────────┐
-│  Watchdog    │            │  OpenClaw Monitor  │
-│  (5-min timer)│            │  (15-min timer)    │
-│  Health check │            │  7 check modules   │
-│  + restart   │            │  + Telegram reports │
-└──────────────┘            └───────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                      ClawdBot Gateway (v2026.1.24-3)                │
+│                        Port 18789 · systemd                         │
+│                                                                      │
+│  ┌──────────┐ ┌────────┐ ┌──────────────┐ ┌────────────┐ ┌────────────────┐
+│  │   Sam    │ │  Cici  │ │    Reddit    │ │   Micro    │ │   Dashboard    │
+│  │  (main)  │ │        │ │   Scanner    │ │  Monitor   │ │     Bot        │
+│  └────┬─────┘ └───┬────┘ └──────┬───────┘ └─────┬──────┘ └───────┬────────┘
+│       │           │             │                │                │
+└───────┼───────────┼─────────────┼────────────────┼────────────────┼──────────┘
+        │           │             │                │                │
+   @socialmedia  @cicigogogo  @redditscanscan  @micromonitorrrrr   (web)
+   sam112bot     _codebot     _bot             _bot
 ```
 
-## Bot Fleet
+## Agents
 
-| Bot | Telegram Handle | Agent ID | Purpose |
-|-----|-----------------|----------|---------|
-| **Sam** | `@socialmediasam112bot` | `main` | Social media marketing assistant via GetLate.dev |
-| **Cici** | `@cicigogogo_codebot` | `cici` | Automation engineer and code assistant |
-| **Reddit Scanner** | `@redditscanscan_bot` | `reddit-scanner` | Reddit scraping and trend reports via Apify |
-| **MicroMonitor** | `@micromonitorrrrr_bot` | `openclaw-monitor` | Ecosystem health auditor (7 check modules) |
+| Agent | Telegram Bot | Role | Workspace |
+|-------|-------------|------|-----------|
+| **Sam** (main) | `@socialmediasam112bot` | SMMA marketing partner — content strategy, scheduling, client management | `/root/clawd` |
+| **Cici** | `@cicigogogo_codebot` | Automation engineer — production systems for legal & hospitality clients | `/root/clawd/CiciCoder` |
+| **Reddit Scanner** | `@redditscanscan_bot` | Reddit intelligence — daily scraping, trend analysis, reports | `/root/clawd/RedditScanner` |
+| **MicroMonitor** | `@micromonitorrrrr_bot` | Ops watchdog — ecosystem health checks every 15 minutes | `/root/openclaw-monitor` |
+| **Dashboard Bot** | *(client-facing web)* | SMMA dashboard assistant — content & analytics for clients | `/root/clawd/DashboardBot` |
 
-See [`bots/`](bots/) for deep dives on each bot.
+## Key Components
+
+- **Gateway**: Node.js service managed by systemd, auto-restarts on failure
+- **Watchdog**: Health check every 5 min via systemd timer, auto-restarts gateway
+- **Memory**: Per-agent isolated memory via `memory-core` plugin (MEMORY.md + memory/ subdirs)
+- **Sandboxes**: 3 Docker configs — restricted (main), development (cici), content_creation (smma)
+- **Cron**: 6 scheduled jobs (reviews, reports, monitoring, code summaries)
+- **Skills**: GetLate (social scheduling), GitHub, Gemini Media (image/video generation)
+- **Telegram**: 5 bot accounts, pairing DM policy + allowlist group policy
 
 ## Quick Start
 
-> New to the stack? Follow these guides in order.
+```bash
+# 1. Install ClawdBot (requires Node.js 18+)
+npm install -g clawdbot
 
-1. **[Architecture Overview](docs/01-architecture-overview.md)** — understand how the pieces fit together
-2. **[Prerequisites](docs/02-prerequisites.md)** — server requirements, Node.js, Python, systemd
-3. **[Telegram Bot Setup](docs/03-telegram-bot-setup.md)** — create a bot with BotFather, get your chat ID
-4. **[ClawdBot Installation](docs/04-clawdbot-installation.md)** — install ClawdBot on your server
-5. **[Connecting a Bot to OpenClaw](docs/05-connecting-bot-to-openclaw.md)** — wire up tokens, agents, and bindings
-6. **[Chat ID Pairing](docs/06-chat-id-pairing.md)** — allowlists, DM pairing, access control
-7. **[Agent Configuration](docs/07-agent-configuration.md)** — create agents, workspaces, SOUL.md identity docs
-8. **[Memory System](docs/08-memory-system.md)** — claude-mem setup and per-agent isolation
-9. **[Systemd Services](docs/09-systemd-services.md)** — gateway, watchdog, and monitor timers
-10. **[Monitoring & Ops](docs/10-monitoring-and-ops.md)** — health checks, OpenClaw Monitor, recovery
-11. **[Troubleshooting](docs/11-troubleshooting.md)** — common failures, diagnostics, fixes
+# 2. Clone and run setup
+git clone https://github.com/jhulett18/openclaw-agents.git
+cd openclaw-agents
+./install.sh
 
-## Example Configs
+# 3. Start the gateway
+systemctl --user enable --now clawdbot-gateway.service
+systemctl --user enable --now clawdbot-watchdog.timer
 
-The [`examples/`](examples/) directory contains sanitized templates you can copy and customize:
+# 4. Verify
+clawdbot gateway health
+systemctl --user status clawdbot-gateway
+```
 
-- `clawdbot.json.example` — annotated gateway configuration
-- `gateway.service.example` — systemd unit for the gateway
-- `watchdog.service.example` / `watchdog.timer.example` — health check automation
-- `watchdog.sh.example` — the watchdog health check script
-- `monitor_config.yaml.example` — OpenClaw Monitor configuration
+## Common Commands
 
-## Security
+```bash
+# Service management
+systemctl --user status clawdbot-gateway       # Check gateway status
+systemctl --user restart clawdbot-gateway       # Restart gateway
+journalctl --user -u clawdbot-gateway -f        # Stream gateway logs
 
-**This repo contains no secrets.** All tokens, API keys, and chat IDs use placeholder values (`YOUR_TOKEN_HERE`, `YOUR_CHAT_ID`, etc.). Real credentials live on the server in:
+# Watchdog
+systemctl --user status clawdbot-watchdog.timer # Check watchdog timer
+cat /root/.clawdbot/logs/watchdog.log           # View restart history
 
-- `~/.clawdbot/tokens/` — Telegram bot tokens (chmod 600)
-- `~/.clawdbot/clawdbot.json` — master config (not committed)
-- Environment variables and `.env` files for third-party APIs
+# Agent management
+clawdbot agent list                             # List all agents
+clawdbot agent sessions <agent-id>              # View agent sessions
 
-Never commit real credentials. See [docs/03-telegram-bot-setup.md](docs/03-telegram-bot-setup.md) for token storage best practices.
+# Cron jobs
+clawdbot cron list                              # List all cron jobs
+clawdbot cron run <job-id>                      # Trigger a job manually
 
-## Project Structure
+# Health
+clawdbot gateway health --json                  # JSON health output
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | Gateway, agent routing, auth, sandboxes |
+| [Agents](docs/AGENTS.md) | All 5 agents — config, purpose, memory, cron |
+| [Telegram Setup](docs/TELEGRAM_SETUP.md) | Bot creation, tokens, policies, allowlists |
+| [Memory System](docs/MEMORY_SYSTEM.md) | memory-core plugin, per-agent isolation |
+| [Cron Jobs](docs/CRON_JOBS.md) | All 6 scheduled jobs with details |
+| [Sandboxes](docs/SANDBOXES.md) | Docker sandbox configurations |
+| [Monitoring](docs/MONITORING.md) | MicroMonitor agent + watchdog timer |
+
+## Repository Structure
 
 ```
 openclaw-agents/
-├── README.md                              # This file
-├── docs/
-│   ├── 01-architecture-overview.md        # System architecture & data flow
-│   ├── 02-prerequisites.md                # Server requirements
-│   ├── 03-telegram-bot-setup.md           # BotFather, tokens, chat IDs
-│   ├── 04-clawdbot-installation.md        # Installing ClawdBot
-│   ├── 05-connecting-bot-to-openclaw.md   # Config, tokens, agent bindings
-│   ├── 06-chat-id-pairing.md              # Access control & allowlists
-│   ├── 07-agent-configuration.md          # Agents, workspaces, identity
-│   ├── 08-memory-system.md                # claude-mem & per-agent memory
-│   ├── 09-systemd-services.md             # Service units & timers
-│   ├── 10-monitoring-and-ops.md           # Health checks & recovery
-│   └── 11-troubleshooting.md              # Diagnostics & fixes
-├── bots/
-│   ├── sam.md                             # Sam — SMMA bot
-│   ├── cici.md                            # Cici — code assistant
-│   ├── reddit-scanner.md                  # Reddit Scanner — Apify pipeline
-│   ├── micromonitor.md                    # MicroMonitor — ops watchdog
-│   └── improvements.md                    # Recommended improvements
-├── examples/
-│   ├── clawdbot.json.example              # Annotated config template
-│   ├── gateway.service.example            # systemd unit template
-│   ├── watchdog.service.example           # Watchdog oneshot
-│   ├── watchdog.timer.example             # 5-minute timer
-│   ├── watchdog.sh.example                # Health check script
-│   └── monitor_config.yaml.example        # Monitor config template
-└── .gitignore
+├── README.md                          # This file
+├── .env.example                       # GetLate API key template
+├── .gitignore                         # Security-aware gitignore
+├── install.sh                         # Setup script
+├── docs/                              # Detailed documentation
+│   ├── ARCHITECTURE.md
+│   ├── AGENTS.md
+│   ├── TELEGRAM_SETUP.md
+│   ├── MEMORY_SYSTEM.md
+│   ├── CRON_JOBS.md
+│   ├── SANDBOXES.md
+│   └── MONITORING.md
+├── config-templates/                  # Sanitized config templates
+│   ├── clawdbot.example.json
+│   ├── agent-workspace/               # Template agent workspace
+│   │   ├── AGENTS.md
+│   │   ├── SOUL.md
+│   │   ├── IDENTITY.md
+│   │   ├── USER.md
+│   │   ├── HEARTBEAT.md
+│   │   ├── MEMORY.md
+│   │   └── TOOLS.md
+│   └── monitor_config.example.yaml
+├── scripts/                           # Management scripts
+│   ├── gateway-watchdog.sh
+│   ├── docker-health-check.sh
+│   └── setup-systemd.sh
+└── systemd/                           # Service unit templates
+    ├── clawdbot-gateway.service
+    ├── clawdbot-watchdog.service
+    └── clawdbot-watchdog.timer
 ```
 
-## License
+## Security
 
-Private repository. Not for redistribution.
+- Bot tokens stored in `/root/.clawdbot/tokens/` — never committed
+- Gateway auth via bearer token
+- Anthropic OAuth per-agent profiles
+- Telegram allowlist restricts to authorized user(s) only
+- Docker sandboxes: `no_new_privileges`, capability drops, optional readonly rootfs
+- All secrets excluded via `.gitignore`
+
+## Version Info
+
+| Component | Value |
+|-----------|-------|
+| ClawdBot | v2026.1.24-3 |
+| Gateway Port | 18789 |
+| Node Entry | `/usr/lib/node_modules/clawdbot/dist/entry.js` |
+| Config | `/root/.clawdbot/clawdbot.json` |

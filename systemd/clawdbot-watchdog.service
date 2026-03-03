@@ -1,0 +1,6 @@
+[Unit]
+Description=ClawdBot Gateway Watchdog Health Check
+
+[Service]
+Type=oneshot
+ExecStart=/root/.clawdbot/scripts/gateway-watchdog.sh

@@ -1,0 +1,68 @@
+# MicroMonitor Configuration Template
+# Place at: /root/openclaw-monitor/monitor_config.yaml
+
+# Check intervals
+schedule:
+  interval: "*/15 * * * *"  # Every 15 minutes via systemd timer
+  nightly_report: "0 22 * * *"  # Daily at 10 PM ET
+
+# Alert thresholds
+thresholds:
+  gateway_response_ms: 5000    # WARN if gateway response > 5s
+  log_errors_per_day: 50       # WARN if > 50 errors/day
+  memory_usage_percent: 85     # WARN if memory > 85%
+  disk_usage_percent: 80       # WARN if disk > 80%
+  system_load_multiplier: 2    # WARN if load > 2x CPU count
+  stale_report_minutes: 30     # WARN if latest report > 30 min old
+
+# Check modules (7 total)
+checks:
+  gateway:
+    enabled: true
+    endpoint: "127.0.0.1:18789"
+    timeout_seconds: 15
+  credentials:
+    enabled: true
+    check_expiry: true
+    check_permissions: true
+  cron:
+    enabled: true
+    check_missed_runs: true
+    check_stale_jobs: true
+  logs:
+    enabled: true
+    log_path: "/tmp/clawdbot/"
+    error_patterns:
+      - "ERROR"
+      - "FATAL"
+      - "CRASH"
+  system_resources:
+    enabled: true
+  dashboard:
+    enabled: true
+    url: "http://localhost:3000"
+  session_coherence:
+    enabled: true
+
+# Sibling bots to monitor
+sibling_bots:
+  - name: "Sam"
+    username: "@socialmediasam112bot"
+    agent_id: "main"
+  - name: "Cici"
+    username: "@cicigogogo_codebot"
+    agent_id: "cici"
+  - name: "Reddit Scanner"
+    username: "@redditscanscan_bot"
+    agent_id: "reddit-scanner"
+
+# Report output
+reports:
+  save_path: "/root/openclaw-monitor/reports/"
+  format: "json"
+  keep_days: 30
+
+# Telegram delivery
+telegram:
+  enabled: true
+  chat_id: "<your-telegram-chat-id>"

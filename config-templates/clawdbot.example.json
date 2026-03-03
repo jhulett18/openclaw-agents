@@ -1,0 +1,131 @@
+{
+  "_comment": "ClawdBot configuration template — replace all <placeholder> values with actual data",
+
+  "agents": {
+    "defaults": {
+      "workspace": "/root/clawd",
+      "userTimezone": "America/New_York",
+      "compaction": { "mode": "safeguard" },
+      "maxConcurrent": 4,
+      "subagents": { "maxConcurrent": 8 }
+    },
+    "list": [
+      { "id": "main" },
+      {
+        "id": "cici",
+        "name": "cici",
+        "workspace": "/root/clawd/CiciCoder",
+        "agentDir": "/root/.clawdbot/agents/cici/agent"
+      },
+      {
+        "id": "reddit-scanner",
+        "name": "reddit-scanner",
+        "workspace": "/root/clawd/RedditScanner",
+        "agentDir": "/root/.clawdbot/agents/reddit-scanner/agent"
+      },
+      {
+        "id": "openclaw-monitor",
+        "name": "openclaw-monitor",
+        "workspace": "/root/openclaw-monitor",
+        "agentDir": "/root/.clawdbot/agents/openclaw-monitor/agent"
+      },
+      {
+        "id": "dashboard-bot",
+        "name": "dashboard-bot",
+        "workspace": "/root/clawd/DashboardBot",
+        "agentDir": "/root/.clawdbot/agents/dashboard-bot/agent"
+      }
+    ]
+  },
+
+  "bindings": [
+    { "agentId": "main",             "match": { "channel": "telegram", "accountId": "production-smma" } },
+    { "agentId": "cici",             "match": { "channel": "telegram", "accountId": "production-cici" } },
+    { "agentId": "reddit-scanner",   "match": { "channel": "telegram", "accountId": "reddit-scanner" } },
+    { "agentId": "openclaw-monitor", "match": { "channel": "telegram", "accountId": "production-openclaw" } },
+    { "agentId": "dashboard-bot",    "match": { "channel": "telegram", "accountId": "dashboard-bot" } }
+  ],
+
+  "messages": { "ackReactionScope": "group-mentions" },
+  "commands": { "native": "auto", "nativeSkills": "auto" },
+
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial",
+      "accounts": {
+        "production-smma": {
+          "name": "Production Social Media Marketer",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-smma.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "production-cici": {
+          "name": "Cici - Automation Engineer",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-cici.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "reddit-scanner": {
+          "name": "Reddit Scanner",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/reddit-scanner.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "production-openclaw": {
+          "name": "MicroMonitor",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-openclaw.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "dashboard-bot": {
+          "name": "Dashboard Bot",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/dashboard-bot.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        }
+      }
+    }
+  },
+
+  "gateway": {
+    "mode": "local",
+    "http": { "endpoints": { "chatCompletions": { "enabled": true } } },
+    "auth": {
+      "mode": "token",
+      "token": "<your-gateway-auth-token>"
+    }
+  },
+
+  "skills": {
+    "entries": {
+      "getlate":      { "enabled": true, "apiKey": "<your-getlate-api-key>" },
+      "github":       { "enabled": true },
+      "gemini-media": { "enabled": true, "apiKey": "<your-gemini-api-key>" }
+    }
+  },
+
+  "plugins": {
+    "slots": { "memory": "memory-core" },
+    "entries": {
+      "telegram":    { "enabled": true },
+      "memory-core": { "enabled": true }
+    }
+  },
+
+  "hooks": {
+    "internal": { "entries": { "session-memory": { "enabled": true } } }
+  }
+}
