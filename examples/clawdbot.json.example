@@ -1,0 +1,220 @@
+{
+  // ClawdBot Gateway Configuration
+  // Copy to ~/.clawdbot/clawdbot.json and customize.
+  // All paths must be absolute. All token files must be chmod 600.
+
+  "meta": {
+    // Auto-updated by ClawdBot — tracks config version
+    "lastTouchedVersion": "2026.x.x-x",
+    "lastTouchedAt": "2026-01-01T00:00:00.000Z"
+  },
+
+  "agents": {
+    "defaults": {
+      // Default workspace for all agents (override per-agent below)
+      "workspace": "/root/clawd",
+
+      // Timezone for time-aware operations
+      "userTimezone": "America/New_York",
+
+      // Context window management
+      "compaction": {
+        "mode": "safeguard"
+      },
+
+      // Max simultaneous conversations per agent
+      "maxConcurrent": 4,
+
+      // Max concurrent subagent processes
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+
+    "list": [
+      // Agent: Sam (Social Media Marketer)
+      {
+        "id": "main"
+        // Uses defaults — workspace: /root/clawd
+      },
+
+      // Agent: Cici (Code Assistant)
+      {
+        "id": "cici",
+        "name": "cici",
+        "workspace": "/root/clawd/CiciCoder",
+        "agentDir": "/root/.clawdbot/agents/cici/agent"
+      },
+
+      // Agent: Reddit Scanner
+      {
+        "id": "reddit-scanner",
+        "name": "reddit-scanner",
+        "workspace": "/root/clawd/RedditScanner",
+        "agentDir": "/root/.clawdbot/agents/reddit-scanner/agent"
+      },
+
+      // Agent: MicroMonitor (Ops Watchdog)
+      {
+        "id": "openclaw-monitor",
+        "name": "openclaw-monitor",
+        "workspace": "/root/openclaw-monitor",
+        "agentDir": "/root/.clawdbot/agents/openclaw-monitor/agent"
+      }
+    ]
+  },
+
+  // Bindings: Map Telegram accounts → agents
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "production-smma"
+      }
+    },
+    {
+      "agentId": "cici",
+      "match": {
+        "channel": "telegram",
+        "accountId": "production-cici"
+      }
+    },
+    {
+      "agentId": "reddit-scanner",
+      "match": {
+        "channel": "telegram",
+        "accountId": "reddit-scanner"
+      }
+    },
+    {
+      "agentId": "openclaw-monitor",
+      "match": {
+        "channel": "telegram",
+        "accountId": "production-openclaw"
+      }
+    }
+  ],
+
+  // Message handling
+  "messages": {
+    // When to show the ack reaction (thinking indicator)
+    "ackReactionScope": "group-mentions"
+  },
+
+  // Command handling
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+
+  // Telegram channel configuration
+  "channels": {
+    "telegram": {
+      "enabled": true,
+
+      // Default policies (overridden per-account if needed)
+      "dmPolicy": "pairing",        // "pairing" | "open" | "disabled"
+      "groupPolicy": "allowlist",    // "allowlist" | "open" | "disabled"
+      "streamMode": "partial",       // "partial" | "complete"
+
+      "accounts": {
+        // Sam — Social Media Marketer
+        "production-smma": {
+          "name": "Production Social Media Marketer",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-smma.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+
+        // Cici — Code Assistant
+        "production-cici": {
+          "name": "Cici - Automation Engineer",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-cici.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+
+        // Reddit Scanner
+        "reddit-scanner": {
+          "name": "Reddit Scanner",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/reddit-scanner.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+
+        // MicroMonitor — Ops Watchdog
+        "production-openclaw": {
+          "name": "MicroMonitor",
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "tokenFile": "/root/.clawdbot/tokens/production-openclaw.token",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        }
+      }
+    }
+  },
+
+  // Gateway mode
+  "gateway": {
+    "mode": "local"
+  },
+
+  // Skills (optional integrations)
+  "skills": {
+    "entries": {
+      "getlate": {
+        "enabled": true,
+        "apiKey": "YOUR_GETLATE_API_KEY"
+      },
+      "github": {
+        "enabled": true
+      },
+      "gemini-media": {
+        "enabled": true,
+        "apiKey": "YOUR_GEMINI_API_KEY"
+      }
+    }
+  },
+
+  // Plugins
+  "plugins": {
+    "slots": {
+      "memory": "claude-mem"
+    },
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "claude-mem": {
+        "enabled": true,
+        "config": {
+          "syncMemoryFile": true,
+          "workerPort": 37777,
+          "project": "openclaw"
+        }
+      },
+      "memory-core": {
+        "enabled": false
+      }
+    }
+  },
+
+  // Hooks
+  "hooks": {
+    "internal": {
+      "entries": {
+        "session-memory": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}

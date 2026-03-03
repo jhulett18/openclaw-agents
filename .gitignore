@@ -1,95 +1,44 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-venv/
-ENV/
-env/
-.venv
-
-# Environment variables
+# Environment variables & secrets
 .env
-.env.local
+.env.*
 *.env
-
-# API Keys and Secrets
+*.token
+*.key
 *_api_key*
 *_secret*
 secrets/
 credentials/
 
+# ClawdBot runtime
+.clawdbot/
+clawdbot.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+.pytest_cache/
+.coverage
+
 # Logs
 *.log
 logs/
-/tmp/
 
-# OS Files
+# OS
 .DS_Store
 Thumbs.db
 *.swp
-*.swo
 *~
 
 # IDE
 .vscode/
 .idea/
 *.sublime-*
-*.code-workspace
 
-# ClawdBot
-.clawdbot/cache/
-.clawdbot/logs/
-.clawdbot/tmp/
-
-# Media files (optional - uncomment if you don't want to track uploaded media)
-# media/
-# uploads/
-# *.jpg
-# *.jpeg
-# *.png
-# *.gif
-# *.mp4
-# *.mov
-
-# Docker
-*.pid
-.dockerignore
-
-# Recovery files
-/tmp/clawdbot-*
-recovery-attempts.json
-
-# Backup files
-*.bak
-*.backup
-*.old
-
-# Test files
-test_*
-*_test.py
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Temporary files
+# Temp
 *.tmp
-temp/
+*.bak
 tmp/
+temp/

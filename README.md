@@ -1,300 +1,127 @@
-# OpenClaw Agents - Instance Setup Documentation
+# OpenClaw Agents
 
-**This repository contains documentation and setup instructions only. No executable code is included.**
+Self-hosted Telegram bot fleet powered by [ClawdBot](https://github.com/clawdbot/clawdbot) — a Node.js gateway that multiplexes multiple Telegram bots through a single process, each backed by its own Claude agent.
 
-## Purpose
-
-This repository serves as a knowledge base for setting up ClawdBot agents on a new server instance, with a focus on Telegram bot configuration and system monitoring tools. It documents how to replicate the current working setup without relying on third-party services.
-
-## What This Repository Contains
-
-- 📚 **Documentation**: Step-by-step guides for bot setup
-- 🤖 **Bot Configuration**: Instructions for Telegram bot creation and connection
-- 🛠️ **Management Scripts**: Monitoring and recovery tools
-- 📋 **Best Practices**: Security, backup, and maintenance procedures
-
-## What This Repository Does NOT Contain
-
-- ❌ No API keys or tokens
-- ❌ No executable bot code
-- ❌ No third-party service dependencies
-- ❌ No GetLate or other proxy services
-
-## System Architecture
+## Architecture
 
 ```
-Your Server
-    ↓
-ClawdBot Gateway (Port 18789)
-    ↓
-Direct Connection to Telegram Bot API
-    ↓
-Telegram Users/Channels/Groups
+Telegram Cloud
+     │
+     │  (Bot API polling)
+     ▼
+┌─────────────────────────────────────────────────┐
+│  ClawdBot Gateway  (Node.js, port 18789)        │
+│                                                 │
+│  ┌───────────┐ ┌───────────┐ ┌───────────────┐ │
+│  │ Account:  │ │ Account:  │ │ Account:      │ │
+│  │ prod-smma │ │ prod-cici │ │ reddit-scanner│ │     ┌──────────────┐
+│  └─────┬─────┘ └─────┬─────┘ └──────┬────────┘ │     │  claude-mem  │
+│        │              │              │          │────▶│  (port 37777)│
+│  ┌─────┴─────┐ ┌─────┴─────┐ ┌──────┴────────┐ │     │  Per-agent   │
+│  │ Agent:    │ │ Agent:    │ │ Agent:        │ │     │  memory      │
+│  │ main     │ │ cici      │ │ reddit-scanner│ │     └──────────────┘
+│  └───────────┘ └───────────┘ └───────────────┘ │
+│                                                 │
+│  ┌──────────────────┐                           │
+│  │ Account:         │                           │
+│  │ prod-openclaw    │                           │
+│  └────────┬─────────┘                           │
+│  ┌────────┴─────────┐                           │
+│  │ Agent:           │                           │
+│  │ openclaw-monitor │                           │
+│  └──────────────────┘                           │
+└─────────────────────────────────────────────────┘
+     │                              │
+     │ systemd                      │ systemd
+     ▼                              ▼
+┌──────────────┐            ┌───────────────────┐
+│  Watchdog    │            │  OpenClaw Monitor  │
+│  (5-min timer)│            │  (15-min timer)    │
+│  Health check │            │  7 check modules   │
+│  + restart   │            │  + Telegram reports │
+└──────────────┘            └───────────────────┘
 ```
 
-## Quick Start Guide
+## Bot Fleet
 
-### 1. Install ClawdBot
+| Bot | Telegram Handle | Agent ID | Purpose |
+|-----|-----------------|----------|---------|
+| **Sam** | `@socialmediasam112bot` | `main` | Social media marketing assistant via GetLate.dev |
+| **Cici** | `@cicigogogo_codebot` | `cici` | Automation engineer and code assistant |
+| **Reddit Scanner** | `@redditscanscan_bot` | `reddit-scanner` | Reddit scraping and trend reports via Apify |
+| **MicroMonitor** | `@micromonitorrrrr_bot` | `openclaw-monitor` | Ecosystem health auditor (7 check modules) |
 
-```bash
-# Install globally via npm
-npm install -g clawdbot
+See [`bots/`](bots/) for deep dives on each bot.
 
-# Initialize ClawdBot
-clawdbot setup
+## Quick Start
 
-# Start the gateway
-clawdbot gateway
+> New to the stack? Follow these guides in order.
 
-# Or run as daemon (recommended)
-clawdbot daemon enable
-clawdbot daemon start
-```
+1. **[Architecture Overview](docs/01-architecture-overview.md)** — understand how the pieces fit together
+2. **[Prerequisites](docs/02-prerequisites.md)** — server requirements, Node.js, Python, systemd
+3. **[Telegram Bot Setup](docs/03-telegram-bot-setup.md)** — create a bot with BotFather, get your chat ID
+4. **[ClawdBot Installation](docs/04-clawdbot-installation.md)** — install ClawdBot on your server
+5. **[Connecting a Bot to OpenClaw](docs/05-connecting-bot-to-openclaw.md)** — wire up tokens, agents, and bindings
+6. **[Chat ID Pairing](docs/06-chat-id-pairing.md)** — allowlists, DM pairing, access control
+7. **[Agent Configuration](docs/07-agent-configuration.md)** — create agents, workspaces, SOUL.md identity docs
+8. **[Memory System](docs/08-memory-system.md)** — claude-mem setup and per-agent isolation
+9. **[Systemd Services](docs/09-systemd-services.md)** — gateway, watchdog, and monitor timers
+10. **[Monitoring & Ops](docs/10-monitoring-and-ops.md)** — health checks, OpenClaw Monitor, recovery
+11. **[Troubleshooting](docs/11-troubleshooting.md)** — common failures, diagnostics, fixes
 
-### 2. Create Telegram Bot
+## Example Configs
 
-1. Open Telegram and message **@BotFather**
-2. Send `/newbot` and follow prompts
-3. Save the bot token provided
+The [`examples/`](examples/) directory contains sanitized templates you can copy and customize:
 
-### 3. Connect Bot to ClawdBot
+- `clawdbot.json.example` — annotated gateway configuration
+- `gateway.service.example` — systemd unit for the gateway
+- `watchdog.service.example` / `watchdog.timer.example` — health check automation
+- `watchdog.sh.example` — the watchdog health check script
+- `monitor_config.yaml.example` — OpenClaw Monitor configuration
 
-```bash
-# Add bot to ClawdBot
-clawdbot providers add \
-  --provider telegram \
-  --account mybotname \
-  --name "My Bot Name" \
-  --token "BOT_TOKEN_FROM_BOTFATHER"
+## Security
 
-# Verify connection
-clawdbot providers list | grep telegram
+**This repo contains no secrets.** All tokens, API keys, and chat IDs use placeholder values (`YOUR_TOKEN_HERE`, `YOUR_CHAT_ID`, etc.). Real credentials live on the server in:
 
-# Send test message
-clawdbot message send \
-  --provider telegram \
-  --account mybotname \
-  --to @channel_name \
-  --message "Hello World!"
-```
+- `~/.clawdbot/tokens/` — Telegram bot tokens (chmod 600)
+- `~/.clawdbot/clawdbot.json` — master config (not committed)
+- Environment variables and `.env` files for third-party APIs
 
-## Current Bot Fleet
+Never commit real credentials. See [docs/03-telegram-bot-setup.md](docs/03-telegram-bot-setup.md) for token storage best practices.
 
-This instance runs 5 specialized Telegram bots:
-
-| Bot Name | Account ID | Purpose |
-|----------|------------|---------|
-| **Apartment Bot** | `apartment` | Property management and tenant communications |
-| **ClawdOps System Bot** | `default` | System monitoring, alerts, and admin tasks |
-| **Nightlife Guide Bot** | `events` | Event management and announcements |
-| **Resume Bot** | `resumebot` | Resume generation and career services |
-| **SMMA Bot** | `smma` | Social media marketing automation |
-
-## Documentation Structure
+## Project Structure
 
 ```
 openclaw-agents/
-├── README.md                           # This file
-├── telegram-setup/                     # Telegram bot documentation
-│   ├── TELEGRAM_BOT_SETUP.md         # Complete setup guide
-│   ├── BOT_CREATION.md               # BotFather tutorial
-│   ├── CLAWDBOT_CONNECTION.md        # Provider configuration details
-│   └── EXISTING_BOTS.md              # Current bot configurations
-├── skills/
-│   └── smma/                          # SMMA bot documentation
-│       ├── SKILL.md                  # Skill description
-│       └── README.md                  # Setup instructions
-└── management/                         # System management scripts
-    ├── auto-recovery.sh               # Automated recovery script
-    ├── health-monitor.sh              # Health monitoring
-    ├── monitoring-dashboard.sh        # Dashboard script
-    └── sandbox-setup.sh               # Docker sandbox setup
+├── README.md                              # This file
+├── docs/
+│   ├── 01-architecture-overview.md        # System architecture & data flow
+│   ├── 02-prerequisites.md                # Server requirements
+│   ├── 03-telegram-bot-setup.md           # BotFather, tokens, chat IDs
+│   ├── 04-clawdbot-installation.md        # Installing ClawdBot
+│   ├── 05-connecting-bot-to-openclaw.md   # Config, tokens, agent bindings
+│   ├── 06-chat-id-pairing.md              # Access control & allowlists
+│   ├── 07-agent-configuration.md          # Agents, workspaces, identity
+│   ├── 08-memory-system.md                # claude-mem & per-agent memory
+│   ├── 09-systemd-services.md             # Service units & timers
+│   ├── 10-monitoring-and-ops.md           # Health checks & recovery
+│   └── 11-troubleshooting.md              # Diagnostics & fixes
+├── bots/
+│   ├── sam.md                             # Sam — SMMA bot
+│   ├── cici.md                            # Cici — code assistant
+│   ├── reddit-scanner.md                  # Reddit Scanner — Apify pipeline
+│   ├── micromonitor.md                    # MicroMonitor — ops watchdog
+│   └── improvements.md                    # Recommended improvements
+├── examples/
+│   ├── clawdbot.json.example              # Annotated config template
+│   ├── gateway.service.example            # systemd unit template
+│   ├── watchdog.service.example           # Watchdog oneshot
+│   ├── watchdog.timer.example             # 5-minute timer
+│   ├── watchdog.sh.example                # Health check script
+│   └── monitor_config.yaml.example        # Monitor config template
+└── .gitignore
 ```
-
-## Key Features
-
-### Direct Telegram Connection
-- **No middleman services** - Direct Bot API connection
-- **Lower latency** - No proxy overhead
-- **Full control** - All bot features available
-- **Better security** - Tokens stay on your server
-
-### Multi-Bot Support
-- Run unlimited bots from one instance
-- Each bot has unique account ID
-- Individual bot monitoring and control
-- Separate configurations per bot
-
-### Integrated Monitoring
-- Health checks every 2 hours
-- Auto-recovery from failures
-- Real-time status dashboard
-- Comprehensive logging
-
-## Setup New Instance
-
-### Prerequisites
-- Linux/macOS/Windows with WSL
-- Node.js 18+ and npm
-- Python 3.8+ (for some skills)
-- Internet connection
-- Telegram account
-
-### Installation Steps
-
-1. **Clone this repository**
-   ```bash
-   git clone https://github.com/yourusername/openclaw-agents.git
-   cd openclaw-agents
-   ```
-
-2. **Install ClawdBot**
-   ```bash
-   npm install -g clawdbot
-   clawdbot setup
-   ```
-
-3. **Follow the guides**
-   - Start with `telegram-setup/TELEGRAM_BOT_SETUP.md`
-   - Create bots using `telegram-setup/BOT_CREATION.md`
-   - Configure providers via `telegram-setup/CLAWDBOT_CONNECTION.md`
-
-4. **Set up monitoring** (optional)
-   ```bash
-   chmod +x management/*.sh
-   crontab -e
-   # Add: */120 * * * * /path/to/management/health-monitor.sh
-   ```
-
-## Security Best Practices
-
-### Token Management
-- **Never commit tokens to Git**
-- **Use token files** with restrictive permissions (600)
-- **Rotate tokens** quarterly or if compromised
-- **Store securely** in password managers
-
-### Access Control
-- Each bot should have minimal required permissions
-- Use different bots for different security levels
-- Regularly audit bot access to channels/groups
-- Monitor logs for unauthorized usage
-
-### Backup Strategy
-```bash
-# Backup configuration
-cp -r ~/.clawdbot ~/.clawdbot_backup_$(date +%Y%m%d)
-
-# Export providers
-clawdbot providers list --json > providers_backup.json
-
-# Create encrypted archive
-tar -czf clawdbot_backup_$(date +%Y%m%d).tar.gz ~/.clawdbot_backup_*
-```
-
-## Common Commands
-
-### Bot Management
-```bash
-# List all bots
-clawdbot providers list
-
-# Add new bot
-clawdbot providers add --provider telegram --account newbot --token "TOKEN"
-
-# Remove bot
-clawdbot providers remove --provider telegram --account oldbot
-
-# Check status
-clawdbot status
-```
-
-### Message Operations
-```bash
-# Send to channel
-clawdbot message send --provider telegram --account smma --to @channel --message "text"
-
-# Send to user (by ID)
-clawdbot message send --provider telegram --account support --to 123456789 --message "text"
-
-# Send to group
-clawdbot message send --provider telegram --account events --to -1001234567890 --message "text"
-```
-
-### System Control
-```bash
-# Gateway management
-clawdbot gateway                    # Start manually
-clawdbot daemon start               # Start as service
-clawdbot daemon stop                # Stop service
-clawdbot daemon restart             # Restart service
-
-# Health checks
-clawdbot doctor                     # Full system check
-clawdbot providers status --deep    # Detailed provider status
-
-# Logs
-clawdbot logs --tail 100           # View recent logs
-clawdbot logs --tail 50 | grep telegram  # Filter for Telegram
-```
-
-## Troubleshooting
-
-### Bot Not Responding
-1. Check gateway status: `clawdbot daemon status`
-2. Verify bot token: `clawdbot providers list`
-3. Test connection: `clawdbot doctor`
-4. Restart if needed: `clawdbot daemon restart`
-
-### Invalid Token
-1. Verify with @BotFather
-2. Regenerate if needed
-3. Update in ClawdBot
-4. Test connection
-
-### Connection Issues
-1. Check network: `ping api.telegram.org`
-2. Verify firewall (port 443 required)
-3. Check logs: `clawdbot logs --tail 100`
-4. Restart gateway
-
-## Migration Checklist
-
-When setting up a new instance:
-
-- [ ] Install ClawdBot
-- [ ] Initialize configuration
-- [ ] Create/import bot tokens
-- [ ] Add each bot to ClawdBot
-- [ ] Test each bot connection
-- [ ] Verify channel/group access
-- [ ] Set up monitoring scripts
-- [ ] Configure auto-start daemon
-- [ ] Test message sending
-- [ ] Document custom configurations
-
-## Important Notes
-
-1. **This is documentation only** - No running code included
-2. **Direct connections only** - No third-party APIs
-3. **Security first** - Never expose tokens
-4. **Test everything** - Verify each step works
-
-## Support Resources
-
-- **ClawdBot Docs**: https://docs.openclaw.ai/
-- **Telegram Bot API**: https://core.telegram.org/bots
-- **BotFather**: https://t.me/botfather
-- **This Repository**: Documentation and guides
-
-## Contributing
-
-This repository is meant for documentation and knowledge transfer. When updating:
-1. Keep documentation clear and concise
-2. Update based on actual working configurations
-3. Never include real tokens or sensitive data
-4. Test all instructions on a fresh system
 
 ## License
 
-Documentation and scripts provided as-is for setting up ClawdBot instances.
+Private repository. Not for redistribution.

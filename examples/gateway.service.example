@@ -1,0 +1,25 @@
+# ClawdBot Gateway — systemd user service
+# Copy to ~/.config/systemd/user/clawdbot-gateway.service
+# Then: systemctl --user daemon-reload && systemctl --user enable --now clawdbot-gateway.service
+
+[Unit]
+Description=Clawdbot Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/node /usr/lib/node_modules/clawdbot/dist/entry.js gateway --port 18789
+Restart=always
+RestartSec=5
+KillMode=process
+
+# Environment — adjust paths to match your system
+Environment=HOME=/root
+Environment="PATH=/root/.local/bin:/root/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
+Environment=CLAWDBOT_GATEWAY_PORT=18789
+Environment="CLAWDBOT_SYSTEMD_UNIT=clawdbot-gateway.service"
+Environment=CLAWDBOT_SERVICE_MARKER=clawdbot
+Environment=CLAWDBOT_SERVICE_KIND=gateway
+
+[Install]
+WantedBy=default.target

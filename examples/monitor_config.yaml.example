@@ -1,0 +1,97 @@
+# OpenClaw Monitor — Configuration Template
+# Copy to /root/openclaw-monitor/monitor_config.yaml and customize.
+# All paths must be absolute.
+
+# Gateway connection
+gateway:
+  health_command: "clawdbot gateway health --json"
+  health_timeout_sec: 15
+  rpc_host: "127.0.0.1"
+  rpc_port: 18789
+
+# Agent definitions — one entry per bot
+agents:
+  main:
+    name: "Sam"
+    workspace: "/root/clawd"
+    telegram_account: "production-smma"
+    bot_username: "@socialmediasam112bot"
+    heartbeat_enabled: true
+    session_stale_minutes: 90      # Flag if no activity for 90 min
+
+  cici:
+    name: "Cici"
+    workspace: "/root/clawd/CiciCoder"
+    telegram_account: "production-cici"
+    bot_username: "@cicigogogo_codebot"
+    heartbeat_enabled: false
+    session_stale_minutes: 1440    # 24 hours
+
+  reddit-scanner:
+    name: "Reddit Scanner"
+    workspace: "/root/clawd/RedditScanner"
+    telegram_account: "reddit-scanner"
+    bot_username: "@redditscanscan_bot"
+    heartbeat_enabled: false
+    session_stale_minutes: 1440    # 24 hours
+
+  openclaw-monitor:
+    name: "MicroMonitor"
+    workspace: "/root/openclaw-monitor"
+    telegram_account: "production-openclaw"
+    bot_username: "@micromonitorrrrr_bot"
+    heartbeat_enabled: false
+    session_stale_minutes: 1440    # 24 hours
+
+# Credential locations — used by the credentials check module
+credentials:
+  telegram_tokens:
+    production-smma: "/root/.clawdbot/tokens/production-smma.token"
+    production-cici: "/root/.clawdbot/tokens/production-cici.token"
+    reddit-scanner: "/root/.clawdbot/tokens/reddit-scanner.token"
+    production-openclaw: "/root/.clawdbot/tokens/production-openclaw.token"
+
+  apify:
+    env_file: "/root/reddit-scanner/.env"
+    env_key: "APIFY_API_KEY"
+    validation_url: "https://api.apify.com/v2/users/me"
+
+  getlate:
+    key_file: "/root/.config/getlate/api_key"
+    config_cross_check: "/root/.clawdbot/clawdbot.json"
+    config_json_path: "skills.entries.getlate.apiKey"
+
+# Cron job monitoring
+cron:
+  jobs_file: "/root/.clawdbot/cron/jobs.json"
+  runs_dir: "/root/.clawdbot/cron/runs"
+  overdue_tolerance_minutes: 30
+
+# Log locations
+logs:
+  gateway_log_dir: "/tmp/clawdbot"
+  gateway_log_pattern: "clawdbot-{date}.log"
+  watchdog_log: "/root/.clawdbot/logs/watchdog.log"
+  last_restart_file: "/root/.clawdbot/logs/.watchdog-last-restart"
+
+# Dashboard monitoring (Sam's client dashboard)
+dashboard:
+  url: "http://127.0.0.1:3000"
+  timeout_sec: 5
+  sqlite_db: "/root/sam-dashboard/sam.db"
+
+# Alert thresholds
+thresholds:
+  response_time_ms: 5000          # Gateway response time WARN threshold
+  error_rate_per_day: 50          # Log errors per day WARN threshold
+  memory_percent: 85              # System memory WARN threshold
+  disk_percent: 80                # Disk usage WARN threshold
+  load_warn_multiplier: 2.0       # WARN if load > N * cpu_count
+
+# Telegram reporting — where to send critical alerts
+telegram_report:
+  token_file: "/root/.clawdbot/tokens/production-smma.token"
+  admin_chat_id: "YOUR_CHAT_ID"
+
+# Report output directory
+reports_dir: "/root/openclaw-monitor/reports"

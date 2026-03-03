@@ -1,0 +1,19 @@
+# ClawdBot Watchdog Timer — runs health check every 5 minutes
+# Copy to ~/.config/systemd/user/clawdbot-watchdog.timer
+# Then: systemctl --user daemon-reload && systemctl --user enable --now clawdbot-watchdog.timer
+
+[Unit]
+Description=ClawdBot Gateway Watchdog Timer
+
+[Timer]
+# First run 2 minutes after boot (gives gateway time to start)
+OnBootSec=2min
+
+# Then every 5 minutes
+OnUnitActiveSec=5min
+
+# Allow up to 30 seconds of jitter
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target
